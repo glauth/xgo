@@ -17,6 +17,19 @@ ___
 * [Contributing](#contributing)
 * [Lisence](#license)
 
+## Fork again
+
+This repository is a fork of [crazy-max/xgo](https://github.com/crazy-max/xgo) (see below)
+with the added ability to run a command before building. This is particularly useful
+when building a target that has some package dependencies that are not already
+installed in the docker images used by xgo.
+
+Here is an example of how to build a target that depends on `libpam0g-dev`, used in GLauth's build toolchain:
+
+```shell
+xgo --targets linux/amd64 --preparecmd "apt-get update && apt-get install -y libpam0g-dev" github.com/GLauth/glauth
+```
+
 ## Fork
 
 This repository is a fork of [karalabe/xgo](https://github.com/karalabe/xgo) to

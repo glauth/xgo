@@ -59,6 +59,7 @@ var (
 	buildMode       = flag.String("buildmode", "default", "Indicates which kind of object file to build")
 	buildVCS        = flag.String("buildvcs", "", "Whether to stamp binaries with version control information")
 	buildTrimPath   = flag.Bool("trimpath", false, "Remove all file system paths from the resulting executable")
+	bringupCmd      = flag.String("bringupcmd", "", "Command to run before building, e.g. 'apt install -y libfoo'")
 	buildHideWindow = flag.Bool("hidewindow", false, "Optional flag to hide the console window on Windows")
 )
 
@@ -72,6 +73,7 @@ type BuildFlags struct {
 	Mode       string // Indicates which kind of object file to build
 	VCS        string // Whether to stamp binaries with version control information
 	TrimPath   bool   // Remove all file system paths from the resulting executable
+	BringupCmd string // Command to run before building, e.g. 'apt install -y libfoo'
 	HideWindow bool   // Hide the console window on Windows
 }
 
@@ -174,6 +176,7 @@ func main() {
 		VCS:        *buildVCS,
 		TrimPath:   *buildTrimPath,
 		HideWindow: *buildHideWindow,
+		BringupCmd: *bringupCmd,
 	}
 	log.Printf("DBG: flags: %+v", flags)
 	folder, err := os.Getwd()
@@ -346,7 +349,18 @@ func compile(image string, config *ConfigFlags, flags *BuildFlags, folder string
 		args = append(args, []string{"-e", "EXT_GOPATH=" + strings.Join(paths, ":")}...)
 	}
 
-	args = append(args, []string{image, config.Repository}...)
+	if flags.BringupCmd != "" {
+		args = append(
+			args,
+			[]string{
+				"--entrypoint", "",
+				image,
+				"sh", "-c", fmt.Sprintf("%s && xgo-build %s", flags.BringupCmd, config.Repository),
+			}...)
+	} else {
+		args = append(args, []string{image, config.Repository}...)
+	}
+
 	log.Printf("INFO: Docker %s", strings.Join(args, " "))
 	return run(exec.Command("docker", args...))
 }
